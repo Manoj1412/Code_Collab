@@ -18,6 +18,7 @@ const EditorPage = () => {
   const [them, setThem] = useRecoilState(cmtheme);
 
   const [clients, setClients] = useState([]);
+  const [output, setOutput] = useState('');
 
   const socketRef = useRef(null);
   const codeRef = useRef(null);
@@ -65,6 +66,11 @@ const EditorPage = () => {
           return prev.filter((client) => client.socketId !== socketId);
         });
       });
+
+      // Listening for code output
+      socketRef.current.on(ACTIONS.CODE_OUTPUT, ({ output }) => {
+        setOutput(output);
+      });
     };
     init();
     return () => {
@@ -88,6 +94,18 @@ const EditorPage = () => {
     reactNavigator("/");
   }
 
+  function runCode() {
+    if (codeRef.current) {
+      socketRef.current.emit(ACTIONS.RUN_CODE, {
+        roomId,
+        code: codeRef.current,
+        language: lang,
+      });
+    } else {
+      toast.error("No code to run");
+    }
+  }
+
   if (!location.state) {
     return <Navigate to="/" />;
   }
@@ -97,7 +115,25 @@ const EditorPage = () => {
       <div className="aside">
         <div className="asideInner">
           <div className="logo">
-            <img className="logoImage" src="/logo.png" alt="logo" />
+            <div className="homePageLogoContainer" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="feather feather-code"
+                style={{color: '#46c8e5ff'}}
+              >
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+              <span style={{fontSize: '1.2rem', fontWeight: 'bold', color: '#46c8e5ff'}}>Code Collab</span>
+            </div>
           </div>
           <h3>Connected</h3>
           <div className="clientsList">
@@ -123,21 +159,12 @@ const EditorPage = () => {
             <option value="django">Django</option>
             <option value="dockerfile">Dockerfile</option>
             <option value="go">Go</option>
-            <option value="htmlmixed">HTML-mixed</option>
             <option value="javascript">JavaScript</option>
             <option value="jsx">JSX</option>
             <option value="markdown">Markdown</option>
             <option value="php">PHP</option>
             <option value="python">Python</option>
             <option value="r">R</option>
-            <option value="rust">Rust</option>
-            <option value="ruby">Ruby</option>
-            <option value="sass">Sass</option>
-            <option value="shell">Shell</option>
-            <option value="sql">SQL</option>
-            <option value="swift">Swift</option>
-            <option value="xml">XML</option>
-            <option value="yaml">yaml</option>
           </select>
         </label>
 
@@ -223,6 +250,9 @@ const EditorPage = () => {
         <button className="btn copyBtn" onClick={copyRoomId}>
           Copy ROOM ID
         </button>
+        <button className="btn runBtn" onClick={runCode}>
+          Run Code
+        </button>
         <button className="btn leaveBtn" onClick={leaveRoom}>
           Leave
         </button>
@@ -237,6 +267,10 @@ const EditorPage = () => {
             codeRef.current = code;
           }}
         />
+        <div className="outputWrap">
+          <h3>Output:</h3>
+          <pre className="outputArea">{output}</pre>
+        </div>
       </div>
     </div>
   );
