@@ -2,11 +2,9 @@ import React, { useEffect, useRef } from "react";
 import { language, cmtheme } from "../../src/atoms";
 import { useRecoilValue } from "recoil";
 import ACTIONS from "../actions/Actions";
-
 // CODE MIRROR
 import Codemirror from "codemirror";
 import "codemirror/lib/codemirror.css";
-
 // theme
 import "codemirror/theme/3024-day.css";
 import "codemirror/theme/3024-night.css";
@@ -139,7 +137,7 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
       });
     }
     init();
-  }, [lang]);
+  }, [lang, editorTheme, onCodeChange, roomId, socketRef]);
 
   useEffect(() => {
     if (editorRef.current) {
@@ -159,7 +157,7 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
     return () => {
       socketRef.current.off(ACTIONS.CODE_CHANGE);
     };
-  }, [socketRef.current]);
+  }, [socketRef]);
 
   return <textarea id="realtimeEditor"></textarea>;
 };

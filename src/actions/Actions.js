@@ -8,5 +8,4 @@ const ACTIONS = {
     RUN_CODE: 'run-code',
     CODE_OUTPUT: 'code-output',
 };
-
 module.exports = ACTIONS;

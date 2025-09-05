@@ -16,7 +16,6 @@ COPY . .
 ENV REACT_APP_BACKEND_URL=<your_backend_url>
 ENV SERVER_PORT=<your_server_port>
 
-# Expose the necessary ports
 EXPOSE 5000
 EXPOSE 8000
 EXPOSE 3000
