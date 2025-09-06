@@ -112,6 +112,13 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
 
   useEffect(() => {
     async function init() {
+      if (editorRef.current) {
+        // If already initialized, just update options
+        editorRef.current.setOption("mode", { name: lang });
+        editorRef.current.setOption("theme", editorTheme);
+        return;
+      }
+
       editorRef.current = Codemirror.fromTextArea(
         document.getElementById("realtimeEditor"),
         {
@@ -137,7 +144,14 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
       });
     }
     init();
-  }, [lang, editorTheme, onCodeChange, roomId, socketRef]);
+
+    return () => {
+      if (editorRef.current) {
+        editorRef.current.toTextArea();
+        editorRef.current = null;
+      }
+    };
+  }, [lang, editorTheme, roomId, socketRef]);
 
   useEffect(() => {
     if (editorRef.current) {

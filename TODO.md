@@ -1,0 +1,6 @@
+- [x] Create .env file with REACT_APP_BACKEND_URL=http://localhost:5000
+- [x] Start the server on port 5000
+- [x] Start the React client on port 3000
+- [x] Test socket connection by joining a room
+- [x] Test run function with sample code
+- [x] Verify output appears in terminal

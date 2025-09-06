@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import Client from "../components/Client";
 import Editor from "../components/Editor";
@@ -25,6 +25,11 @@ const EditorPage = () => {
   const location = useLocation();
   const { roomId } = useParams();
   const reactNavigator = useNavigate();
+
+  const handleCodeChange = useCallback((code) => {
+    console.log("on code change" + code);
+    codeRef.current = code;
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -262,10 +267,7 @@ const EditorPage = () => {
         <Editor
           socketRef={socketRef}
           roomId={roomId}
-          onCodeChange={(code) => {
-            console.log("on code change" + code);
-            codeRef.current = code;
-          }}
+          onCodeChange={handleCodeChange}
         />
         <div className="outputWrap">
           <h3>Output:</h3>
