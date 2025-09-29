@@ -1,0 +1,19 @@
+{
+  "name": "code-collab",
+  "version": "1.0.0",
+  "description": "Collaborative Code Editor MVP",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "install-server": "cd server && npm install",
+    "install-client": "cd client && npm install",
+    "install-all": "npm install && npm run install-server && npm run install-client"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "keywords": ["collaboration", "code-editor", "react", "socket.io"],
+  "author": "Your Name",
+  "license": "MIT"
+}
