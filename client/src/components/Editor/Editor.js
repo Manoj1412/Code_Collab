@@ -8,10 +8,21 @@ import axios from 'axios';
 import Participants from './Participants';
 import Chat from './Chat';
 
+const LANGUAGES = ['javascript', 'python', 'c', 'cpp', 'java', 'text'];
+
+const DEFAULT_CODES = {
+  javascript: '// Start coding here',
+  python: '# Start coding here',
+  c: '/* Start coding here */',
+  cpp: '// Start coding here',
+  java: '// Start coding here',
+  text: '',
+};
+
 const CodeEditor = () => {
   const { roomId } = useParams();
   const location = useLocation();
-  const [code, setCode] = useState('// Start coding here');
+  const [codes, setCodes] = useState({ ...DEFAULT_CODES });
   const [language, setLanguage] = useState('javascript');
   const [theme, setTheme] = useState('dark');
   const [participants, setParticipants] = useState([]);
@@ -22,57 +33,27 @@ const CodeEditor = () => {
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [pyodideLoaded, setPyodideLoaded] = useState(false);
-  const [pyodideInstance, setPyodideInstance] = useState(null); // NEW
+  const [pyodideInstance, setPyodideInstance] = useState(null);
   const socketRef = useRef();
   const editorRef = useRef();
   const saveTimeoutRef = useRef();
+
+  // Get current code for selected language
+  const code = codes[language];
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
-useEffect(() => {
-  let isMounted = true;
-  async function loadPyodideScript() {
-    if (!window.loadPyodide) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js';
-      script.async = true;
-      script.onerror = (e) => {
-        console.error('Pyodide script failed to load:', e);
-        setOutput('Pyodide script failed to load. Check your network, CDN access, or browser extensions.');
-      };
-      script.onload = async () => {
-        if (window.loadPyodide) {
-          try {
-            const pyodide = await window.loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/' });
-            if (isMounted) {
-              setPyodideInstance(pyodide);
-              setPyodideLoaded(true);
-            }
-          } catch (err) {
-            console.error('Pyodide failed to initialize:', err);
-            setOutput('Pyodide failed to initialize.');
-          }
-        } else {
-          setOutput('Pyodide global not found after script load.');
-        }
-      };
-      document.head.appendChild(script);
-    } else {
-      try {
-        const pyodide = await window.loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/' });
-        setPyodideInstance(pyodide);
-        setPyodideLoaded(true);
-      } catch (err) {
-        console.error('Pyodide failed to initialize:', err);
-        setOutput('Pyodide failed to initialize.');
-      }
+  // Pyodide loader (you will fix this part yourself)
+  useEffect(() => {
+    let isMounted = true;
+    async function loadPyodideScript() {
+      // ...your pyodide loader here...
     }
-  }
-  loadPyodideScript();
-  return () => { isMounted = false; };
-}, []);
+    loadPyodideScript();
+    return () => { isMounted = false; };
+  }, []);
 
   useEffect(() => {
     const state = location.state;
@@ -112,8 +93,8 @@ useEffect(() => {
 
       socket.on('room-joined', (data) => {
         try {
-          setCode(data.code);
-          setLanguage(data.language);
+          setCodes(data.codes || { ...DEFAULT_CODES });
+          setLanguage(data.language || 'javascript');
           setParticipants(data.participants);
         } catch (e) {
           console.error('Error handling room-joined:', e);
@@ -122,7 +103,10 @@ useEffect(() => {
 
       socket.on('code-updated', (data) => {
         try {
-          setCode(data.code);
+          setCodes(prev => ({
+            ...prev,
+            [data.language]: data.code
+          }));
         } catch (e) {
           console.error('Error handling code-updated:', e);
         }
@@ -138,7 +122,12 @@ useEffect(() => {
 
       socket.on('user-joined', (data) => {
         try {
-          setParticipants(prev => [...prev, data]);
+          setParticipants(prev => {
+            if (prev.find(p => p.socketId === data.socketId)) {
+              return prev;
+            }
+            return [...prev, data];
+          });
         } catch (e) {
           console.error('Error handling user-joined:', e);
         }
@@ -206,7 +195,6 @@ useEffect(() => {
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
-    // Add cursor decorations for other users
     monaco.editor.defineTheme('custom-light', {
       base: 'vs',
       inherit: true,
@@ -235,6 +223,7 @@ useEffect(() => {
     setIsRunning(true);
     setOutput('');
     try {
+      let result = '';
       if (language === 'javascript') {
         const oldLog = console.log;
         const oldError = console.error;
@@ -249,34 +238,42 @@ useEffect(() => {
         };
         try {
           new Function(code)();
-          setOutput(logs.join('\n') || 'Execution completed (no output).');
+          result = logs.join('\n') || 'Execution completed (no output).';
         } catch (e) {
-          setOutput('Error: ' + e.message);
+          result = 'Error: ' + e.message;
         } finally {
           console.log = oldLog;
           console.error = oldError;
         }
       } else if (language === 'python') {
         if (!pyodideLoaded || !pyodideInstance) {
-          setOutput('Pyodide is loading... Please wait and try again.');
-          return;
+          result = 'Pyodide is loading... Please wait and try again.';
+        } else {
+          try {
+            pyodideInstance.runPython(`
+import sys
+from io import StringIO
+sys.stdout = mystdout = StringIO()
+`);
+            pyodideInstance.runPython(code);
+            const pyResult = pyodideInstance.runPython('mystdout.getvalue()');
+            result = pyResult ? String(pyResult) : 'Execution completed (no output).';
+          } catch (e) {
+            result = 'Error: ' + e.message;
+          }
         }
-        try {
-          let result = pyodideInstance.runPython(code);
-          setOutput(result ? String(result) : 'Execution completed (no output).');
-        } catch (e) {
-          setOutput('Error: ' + e.message);
-        }
+      } else if (language === 'text') {
+        result = code || 'No text entered.';
       } else {
-        // C, C++, Java - send to backend
         const response = await axios.post('http://localhost:5000/api/execute', { language, code });
         if (response.data.output) {
-          setOutput(response.data.output);
+          result = response.data.output;
         }
         if (response.data.error) {
-          setOutput('Error: ' + response.data.error);
+          result = 'Error: ' + response.data.error;
         }
       }
+      setOutput(result);
     } catch (err) {
       setOutput('Error: ' + err.message);
     } finally {
@@ -284,21 +281,49 @@ useEffect(() => {
     }
   };
 
+  // When language changes, show code for that language and clear output
+  const handleLanguageChange = (e) => {
+    setLanguage(e.target.value);
+    setOutput('');
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+  };
+
+  // Update code for current language only and broadcast to all participants
   const handleCodeChange = (value) => {
-    setCode(value);
+    setCodes(prev => ({
+      ...prev,
+      [language]: value
+    }));
     if (socketRef.current) {
       socketRef.current.emit('code-change', {
         roomId,
+        language,
         code: value,
         timestamp: Date.now()
       });
-      // Auto-save every 30 seconds
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = setTimeout(() => {
         socketRef.current.emit('save-snapshot', { roomId, code: value });
       }, 30000);
     }
   };
+
+  // Listen for code-updated events and update only the changed language buffer
+  useEffect(() => {
+    if (!socketRef.current) return;
+    const handler = (data) => {
+      setCodes(prev => ({
+        ...prev,
+        [data.language]: data.code
+      }));
+    };
+    socketRef.current.on('code-updated', handler);
+    return () => {
+      socketRef.current.off('code-updated', handler);
+    };
+  }, [socketRef.current]);
 
   const handleCursorChange = (e) => {
     if (socketRef.current && e) {
@@ -322,10 +347,27 @@ useEffect(() => {
     }
   };
 
+  const copyRoomId = () => {
+    navigator.clipboard.writeText(roomId).then(() => {
+      alert('Room ID copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+  };
+
   return (
     <div className={`h-screen flex flex-col ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <header className={`shadow px-4 py-2 flex justify-between items-center ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white'}`}>
-        <h1 className="text-xl font-bold">Room: {roomId}</h1>
+        <div className="flex items-center space-x-2">
+          <h1 className="text-xl font-bold">Room: {roomId}</h1>
+          <button
+            onClick={copyRoomId}
+            className="px-2 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            title="Copy Room ID"
+          >
+            📋
+          </button>
+        </div>
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleTheme}
@@ -343,14 +385,14 @@ useEffect(() => {
           </button>
           <select
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
+            onChange={handleLanguageChange}
             className="border rounded px-2 py-1 dark:bg-gray-700 dark:border-gray-600"
           >
-            <option value="javascript">JavaScript</option>
-            <option value="python">Python</option>
-            <option value="c">C</option>
-            <option value="cpp">C++</option>
-            <option value="java">Java</option>
+            {LANGUAGES.map(lang => (
+              <option key={lang} value={lang}>
+                {lang.charAt(0).toUpperCase() + lang.slice(1)}
+              </option>
+            ))}
           </select>
           <Participants participants={participants} />
         </div>
@@ -360,9 +402,10 @@ useEffect(() => {
         <div className="flex-1 flex flex-col relative">
           <div className="flex-1 relative">
             <Editor
+              key={language} // <-- Add this line!
               height="70vh"
-              language={language}
-              value={code}
+              language={language === 'text' ? 'plaintext' : language}
+              value={codes[language]}
               onChange={handleCodeChange}
               onMount={handleEditorDidMount}
               theme={theme === 'dark' ? 'vs-dark' : 'vs'}
@@ -378,7 +421,7 @@ useEffect(() => {
               onKeyDown={handleTypingStart}
               onKeyUp={handleTypingStop}
               onMouseUp={handleTypingStop}
-            />
+/>
             {typingUsers.length > 0 && (
               <div className={`absolute top-2 right-2 px-2 py-1 rounded text-sm ${theme === 'dark' ? 'bg-yellow-800 text-yellow-200' : 'bg-yellow-200'}`}>
                 {typingUsers.length} user(s) typing...

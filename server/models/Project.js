@@ -10,9 +10,10 @@ const projectSchema = new mongoose.Schema({
     type: String,
     default: 'Untitled Project'
   },
-  code: {
-    type: String,
-    default: '// Start coding here'
+  codes: {
+    type: Map,
+    of: String,
+    default: { javascript: '// Start coding here' }
   },
   language: {
     type: String,
@@ -24,7 +25,10 @@ const projectSchema = new mongoose.Schema({
     socketId: String
   }],
   snapshots: [{
-    code: String,
+    codes: {
+      type: Map,
+      of: String
+    },
     timestamp: {
       type: Date,
       default: Date.now

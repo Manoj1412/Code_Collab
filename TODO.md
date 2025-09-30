@@ -1,9 +1,10 @@
-- [x] Update server/app.js to allow CORS origins for localhost:3000 and localhost:3003
-- [x] Fix server/routes/execute.js for Java code execution to avoid wrapping if public class already exists
-- [x] Add socket error handling in client/src/components/Editor/Editor.js
-- [x] Preload Pyodide in client/src/components/Editor/Editor.js on component mount
-- [x] Add error handling in client/src/components/Dashboard.js for API calls
-- [x] Enhance error handling in client/src/components/Editor/Editor.js for socket connection and initialization
-- [x] Add ErrorBoundary component to catch runtime errors in Editor
-- [x] Wrap Editor route in App.js with ErrorBoundary
-- [x] Fix Python execution to check for loadPyodide availability before running
+# TODO: Convert Dashboard to Dark Mode and Style Buttons
+
+- [x] Update outer background to dark (bg-gray-900)
+- [x] Update card background to dark (bg-gray-800)
+- [x] Update title text to light (text-white)
+- [x] Update "or" text to light gray (text-gray-400)
+- [x] Update input borders and focus rings for dark theme
+- [x] Style Create button with purple-pink gradient
+- [x] Style Join button with blue-cyan gradient
+- [x] Ensure disabled states look good

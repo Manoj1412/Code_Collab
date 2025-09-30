@@ -49,7 +49,12 @@ const handleSocket = (io) => {
           username: p.username,
           avatarColor: p.avatarColor
         }));
-        io.to(roomId).emit('room-joined', { roomId, participants, code: project.code, language: project.language });
+        // Prepare all codes as plain object
+        const allCodes = {};
+        for (const [lang, code] of project.codes.entries()) {
+          allCodes[lang] = code;
+        }
+        io.to(roomId).emit('room-joined', { roomId, participants, codes: allCodes, language: project.language });
 
         // Emit user joined to others
         socket.to(roomId).emit('user-joined', { socketId: socket.id, username, avatarColor });
@@ -77,11 +82,39 @@ const handleSocket = (io) => {
     });
 
     // Code change
-    socket.on('code-change', (data) => {
+    socket.on('code-change', async (data) => {
       if (!rateLimit(socket, 'code-change')) return;
-      const { roomId, code } = data;
+      const { roomId, code, language } = data;
       if (socket.roomId === roomId) {
-        socket.to(roomId).emit('code-updated', { code });
+        try {
+          const project = await Project.findOne({ roomId });
+          if (project) {
+            project.codes.set(language, code);
+            await project.save();
+          }
+        } catch (error) {
+          console.error('Error saving code change:', error);
+        }
+        socket.to(roomId).emit('code-updated', { code, language });
+      }
+    });
+
+    // Language change
+    socket.on('language-change', async (data) => {
+      const { roomId, language } = data;
+      if (socket.roomId === roomId) {
+        try {
+          const project = await Project.findOne({ roomId });
+          if (project) {
+            project.language = language;
+            await project.save();
+            // Emit updated language and code for that language only to the sender
+            const code = project.codes.get(language) || '';
+            socket.emit('language-updated', { language, code });
+          }
+        } catch (error) {
+          console.error('Error handling language change:', error);
+        }
       }
     });
 
@@ -146,6 +179,14 @@ const handleSocket = (io) => {
         } catch (error) {
           console.error('Save error:', error);
         }
+      }
+    });
+
+    // Output update
+    socket.on('output-update', (data) => {
+      const { roomId, output } = data;
+      if (socket.roomId === roomId) {
+        io.to(roomId).emit('output-updated', { output });
       }
     });
 

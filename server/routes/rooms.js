@@ -7,7 +7,7 @@ const router = express.Router();
 router.post('/create', async (req, res) => {
   try {
     const { name, language } = req.body;
-    const roomId = Math.random().toString(36).substring(2, 15);
+    const roomId = Math.random().toString(36).substring(2, 8); // shortened to 6 chars
     const project = await Project.create({
       roomId,
       name: name || 'Untitled Project',

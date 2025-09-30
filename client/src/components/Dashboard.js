@@ -53,22 +53,23 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-        <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">Code Collab</h1>
-        
-        {error && <div className="text-red-600 mb-4 text-center">{error}</div>}
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-md p-8">
+        <h1 className="text-3xl font-bold text-center text-white mb-8 flex items-center justify-center"><span className="mr-2 text-2xl"><img
+          src="https://png.pngtree.com/element_our/png_detail/20181013/code-icon-design-vector-png_125856.jpg"class="img-fluid rounded-top" alt="Code Icon" className='w-8 rounded-full'/></span>Code Collab</h1>
+
+        {error && <div className="text-red-400 mb-4 text-center">{error}</div>}
 
         <div className="space-y-6">
           <button
             onClick={handleCreateRoom}
             disabled={createLoading}
-            className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-md hover:from-purple-600 hover:to-pink-600 disabled:opacity-50"
           >
             {createLoading ? 'Creating...' : 'Create New Room'}
           </button>
 
-          <div className="text-center text-gray-500">or</div>
+          <div className="text-center text-gray-400">or</div>
 
           <div>
             <input
@@ -76,19 +77,19 @@ const Dashboard = () => {
               placeholder="Enter Room ID"
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+              className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4 bg-gray-700 text-white placeholder-gray-400"
             />
             <input
               type="text"
               placeholder="Enter Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+              className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4 bg-gray-700 text-white placeholder-gray-400"
             />
             <button
               onClick={handleJoinRoom}
               disabled={joinLoading}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 px-4 rounded-md hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
             >
               {joinLoading ? 'Joining...' : 'Join Room'}
             </button>
