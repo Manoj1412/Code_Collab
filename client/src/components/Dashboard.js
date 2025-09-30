@@ -53,8 +53,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-md p-8">
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: 'url(/pexels-carlos-oliva-1966452-3586966.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="max-w-md w-full bg-gray-800/70 backdrop-blur-sm rounded-lg shadow-md p-8">
         <h1 className="text-3xl font-bold text-center text-white mb-8 flex items-center justify-center"><span className="mr-2 text-2xl"><img
           src="https://png.pngtree.com/element_our/png_detail/20181013/code-icon-design-vector-png_125856.jpg"class="img-fluid rounded-top" alt="Code Icon" className='w-8 rounded-full'/></span>Code Collab</h1>
 
@@ -89,7 +89,7 @@ const Dashboard = () => {
             <button
               onClick={handleJoinRoom}
               disabled={joinLoading}
-              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 px-4 rounded-md hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-blue-700 to-cyan-500 text-white py-3 px-4 rounded-md hover:from-blue-900 hover:to-cyan-600 disabled:opacity-50"
             >
               {joinLoading ? 'Joining...' : 'Join Room'}
             </button>
