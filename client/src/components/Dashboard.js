@@ -19,7 +19,7 @@ const Dashboard = () => {
     setCreateLoading(true);
     setError('');
     try {
-      const response = await axios.post('http://localhost:5000/api/rooms/create', {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/create`, {
         name: 'New Project',
         language: 'javascript'
       });
@@ -27,7 +27,7 @@ const Dashboard = () => {
       const avatarColor = colors[Math.floor(Math.random() * colors.length)];
       navigate(`/editor/${response.data.roomId}`, { state: { username: promptUsername.trim(), avatarColor } });
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || 'Failed to create room. Please ensure the server is running on port 5000.';
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to create room. Please ensure the server is running.';
       setError(errorMsg);
     } finally {
       setCreateLoading(false);
@@ -42,7 +42,7 @@ const Dashboard = () => {
     setJoinLoading(true);
     setError('');
     try {
-      const response = await axios.post('http://localhost:5000/api/rooms/join', { roomId: roomId.trim(), username: username.trim() });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/join`, { roomId: roomId.trim(), username: username.trim() });
       navigate(`/editor/${roomId.trim()}`, { state: { username: username.trim(), avatarColor: response.data.avatarColor } });
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || 'Failed to join room. Please check the room ID and ensure the server is running.';
