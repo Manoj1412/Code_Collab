@@ -17,6 +17,75 @@ const DEFAULT_CODES = {
   text: '',
 };
 
+// Move connectSocket outside the component to fix ESLint dependency warning
+function connectSocket(socketRef, roomId, user, color, setCodes, setLanguage, setParticipants, setTypingUsers) {
+  try {
+    const socket = io(process.env.REACT_APP_API_URL);
+    socketRef.current = socket;
+
+    socket.emit('join-room', {
+      roomId,
+      username: user,
+      avatarColor: color
+    });
+
+    socket.on('room-joined', (data) => {
+      setCodes(data.codes || { ...DEFAULT_CODES });
+      setLanguage(data.language || 'javascript');
+      setParticipants(data.participants);
+    });
+
+    socket.on('code-updated', (data) => {
+      setCodes(prev => ({
+        ...prev,
+        [data.language]: data.code
+      }));
+    });
+
+    socket.on('user-joined', (data) => {
+      setParticipants(prev => {
+        if (prev.find(p => p.socketId === data.socketId)) {
+          return prev;
+        }
+        return [...prev, data];
+      });
+    });
+
+    socket.on('user-left', (data) => {
+      setParticipants(prev => prev.filter(p => p.socketId !== data.socketId));
+    });
+
+    socket.on('user-typing', (data) => {
+      setTypingUsers(prev => [...prev, data.socketId]);
+    });
+
+    socket.on('user-stopped-typing', (data) => {
+      setTypingUsers(prev => prev.filter(id => id !== data.socketId));
+    });
+
+    socket.on('error', (data) => {
+      console.error('Socket error:', data.message);
+      alert('Connection error: ' + data.message);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Connection error:', err);
+      alert('Failed to connect to server: ' + err.message + '. Please ensure the server is running.');
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.emit('leave-room');
+        socketRef.current.disconnect();
+      }
+    };
+  } catch (err) {
+    console.error('Failed to create socket connection:', err);
+    alert('Failed to establish real-time connection. You can still edit locally, but collaboration features may not work.');
+    return () => {};
+  }
+}
+
 const CodeEditor = () => {
   const { roomId } = useParams();
   const location = useLocation();
@@ -38,21 +107,38 @@ const CodeEditor = () => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const state = location.state;
     let cleanup;
     try {
       if (state && state.username && state.avatarColor) {
         setUsername(state.username);
-        cleanup = connectSocket(state.username, state.avatarColor);
+        cleanup = connectSocket(
+          socketRef,
+          roomId,
+          state.username,
+          state.avatarColor,
+          setCodes,
+          setLanguage,
+          setParticipants,
+          setTypingUsers
+        );
       } else {
         const promptUsername = prompt('Enter your username:');
         if (promptUsername) {
           setUsername(promptUsername);
           const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
           const color = colors[Math.floor(Math.random() * colors.length)];
-          cleanup = connectSocket(promptUsername, color);
+          cleanup = connectSocket(
+            socketRef,
+            roomId,
+            promptUsername,
+            color,
+            setCodes,
+            setLanguage,
+            setParticipants,
+            setTypingUsers
+          );
         }
       }
     } catch (err) {
@@ -60,107 +146,7 @@ const CodeEditor = () => {
       alert('Failed to connect to the room. Please check if the server is running and try again.');
     }
     return cleanup || (() => {});
-  }, [roomId, location]);
-
-  const connectSocket = (user, color) => {
-    try {
-      const socket = io(process.env.REACT_APP_API_URL);
-      socketRef.current = socket;
-
-      socket.emit('join-room', {
-        roomId,
-        username: user,
-        avatarColor: color
-      });
-
-      socket.on('room-joined', (data) => {
-        try {
-          setCodes(data.codes || { ...DEFAULT_CODES });
-          setLanguage(data.language || 'javascript');
-          setParticipants(data.participants);
-        } catch (e) {
-          console.error('Error handling room-joined:', e);
-        }
-      });
-
-      socket.on('code-updated', (data) => {
-        try {
-          setCodes(prev => ({
-            ...prev,
-            [data.language]: data.code
-          }));
-        } catch (e) {
-          console.error('Error handling code-updated:', e);
-        }
-      });
-
-      socket.on('user-joined', (data) => {
-        try {
-          setParticipants(prev => {
-            if (prev.find(p => p.socketId === data.socketId)) {
-              return prev;
-            }
-            return [...prev, data];
-          });
-        } catch (e) {
-          console.error('Error handling user-joined:', e);
-        }
-      });
-
-      socket.on('user-left', (data) => {
-        try {
-          setParticipants(prev => prev.filter(p => p.socketId !== data.socketId));
-        } catch (e) {
-          console.error('Error handling user-left:', e);
-        }
-      });
-
-      socket.on('user-typing', (data) => {
-        try {
-          setTypingUsers(prev => [...prev, data.socketId]);
-        } catch (e) {
-          console.error('Error handling user-typing:', e);
-        }
-      });
-
-      socket.on('user-stopped-typing', (data) => {
-        try {
-          setTypingUsers(prev => prev.filter(id => id !== data.socketId));
-        } catch (e) {
-          console.error('Error handling user-stopped-typing:', e);
-        }
-      });
-
-      socket.on('error', (data) => {
-        try {
-          console.error('Socket error:', data.message);
-          alert('Connection error: ' + data.message);
-        } catch (e) {
-          console.error('Error in error handler:', e);
-        }
-      });
-
-      socket.on('connect_error', (err) => {
-        try {
-          console.error('Connection error:', err);
-          alert('Failed to connect to server: ' + err.message + '. Please ensure the server is running.');
-        } catch (e) {
-          console.error('Error in connect_error handler:', e);
-        }
-      });
-
-      return () => {
-        if (socketRef.current) {
-          socketRef.current.emit('leave-room');
-          socketRef.current.disconnect();
-        }
-      };
-    } catch (err) {
-      console.error('Failed to create socket connection:', err);
-      alert('Failed to establish real-time connection. You can still edit locally, but collaboration features may not work.');
-      return () => {};
-    }
-  };
+  }, [roomId, location, connectSocket]);
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -236,7 +222,6 @@ const CodeEditor = () => {
     }
   };
 
-  // When language changes, show code for that language and clear output
   const handleLanguageChange = (e) => {
     setLanguage(e.target.value);
     setOutput('');
@@ -245,7 +230,6 @@ const CodeEditor = () => {
     }
   };
 
-  // Update code for current language only and broadcast to all participants
   const handleCodeChange = (value) => {
     setCodes(prev => ({
       ...prev,
@@ -265,7 +249,6 @@ const CodeEditor = () => {
     }
   };
 
-  // Listen for code-updated events and update only the changed language buffer
   useEffect(() => {
     if (!socketRef.current) return;
     const handler = (data) => {
