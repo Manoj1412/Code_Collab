@@ -26,27 +26,25 @@ const CodeEditor = () => {
   const [participants, setParticipants] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
   const [username, setUsername] = useState('');
-  const [avatarColor, setAvatarColor] = useState('');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const socketRef = useRef();
   const editorRef = useRef();
   const saveTimeoutRef = useRef();
 
-  // Get current code for selected language
   const code = codes[language];
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const state = location.state;
     let cleanup;
     try {
       if (state && state.username && state.avatarColor) {
         setUsername(state.username);
-        setAvatarColor(state.avatarColor);
         cleanup = connectSocket(state.username, state.avatarColor);
       } else {
         const promptUsername = prompt('Enter your username:');
@@ -54,7 +52,6 @@ const CodeEditor = () => {
           setUsername(promptUsername);
           const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
           const color = colors[Math.floor(Math.random() * colors.length)];
-          setAvatarColor(color);
           cleanup = connectSocket(promptUsername, color);
         }
       }
