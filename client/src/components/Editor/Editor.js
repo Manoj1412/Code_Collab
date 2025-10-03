@@ -17,7 +17,6 @@ const DEFAULT_CODES = {
   text: '',
 };
 
-// Move connectSocket outside the component to fix ESLint dependency warning
 function connectSocket(socketRef, roomId, user, color, setCodes, setLanguage, setParticipants, setTypingUsers) {
   try {
     const socket = io(process.env.REACT_APP_API_URL);
@@ -73,16 +72,12 @@ function connectSocket(socketRef, roomId, user, color, setCodes, setLanguage, se
       alert('Failed to connect to server: ' + err.message + '. Please ensure the server is running.');
     });
 
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.emit('leave-room');
-        socketRef.current.disconnect();
-      }
-    };
+    // Cleanup function will be handled in useEffect
+    return;
   } catch (err) {
     console.error('Failed to create socket connection:', err);
     alert('Failed to establish real-time connection. You can still edit locally, but collaboration features may not work.');
-    return () => {};
+    return;
   }
 }
 
@@ -109,11 +104,10 @@ const CodeEditor = () => {
 
   useEffect(() => {
     const state = location.state;
-    let cleanup;
     try {
       if (state && state.username && state.avatarColor) {
         setUsername(state.username);
-        cleanup = connectSocket(
+        connectSocket(
           socketRef,
           roomId,
           state.username,
@@ -129,7 +123,7 @@ const CodeEditor = () => {
           setUsername(promptUsername);
           const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
           const color = colors[Math.floor(Math.random() * colors.length)];
-          cleanup = connectSocket(
+          connectSocket(
             socketRef,
             roomId,
             promptUsername,
@@ -145,8 +139,15 @@ const CodeEditor = () => {
       console.error('Failed to initialize editor:', err);
       alert('Failed to connect to the room. Please check if the server is running and try again.');
     }
-    return cleanup || (() => {});
-  }, [roomId, location, connectSocket]);
+    // Save the socket instance for cleanup
+    const cleanupSocket = socketRef.current;
+    return () => {
+      if (cleanupSocket) {
+        cleanupSocket.emit('leave-room');
+        cleanupSocket.disconnect();
+      }
+    };
+  }, [roomId, location]);
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
