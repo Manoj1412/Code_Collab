@@ -1,5 +1,3 @@
-/* global loadPyodide */
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
@@ -26,14 +24,11 @@ const CodeEditor = () => {
   const [language, setLanguage] = useState('javascript');
   const [theme, setTheme] = useState('dark');
   const [participants, setParticipants] = useState([]);
-  const [cursors, setCursors] = useState({});
   const [typingUsers, setTypingUsers] = useState([]);
   const [username, setUsername] = useState('');
   const [avatarColor, setAvatarColor] = useState('');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
-  const [pyodideLoaded, setPyodideLoaded] = useState(false);
-  const [pyodideInstance, setPyodideInstance] = useState(null);
   const socketRef = useRef();
   const editorRef = useRef();
   const saveTimeoutRef = useRef();
@@ -44,16 +39,6 @@ const CodeEditor = () => {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
-
-  // Pyodide loader (you will fix this part yourself)
-  useEffect(() => {
-    let isMounted = true;
-    async function loadPyodideScript() {
-      // ...your pyodide loader here...
-    }
-    loadPyodideScript();
-    return () => { isMounted = false; };
-  }, []);
 
   useEffect(() => {
     const state = location.state;
@@ -75,14 +60,14 @@ const CodeEditor = () => {
       }
     } catch (err) {
       console.error('Failed to initialize editor:', err);
-      alert('Failed to connect to the room. Please check if the server is running on port 5000 and try again.');
+      alert('Failed to connect to the room. Please check if the server is running and try again.');
     }
     return cleanup || (() => {});
   }, [roomId, location]);
 
   const connectSocket = (user, color) => {
     try {
-      const socket = io('http://localhost:5000');
+      const socket = io(process.env.REACT_APP_API_URL);
       socketRef.current = socket;
 
       socket.emit('join-room', {
@@ -112,14 +97,6 @@ const CodeEditor = () => {
         }
       });
 
-      socket.on('cursor-moved', (data) => {
-        try {
-          setCursors(prev => ({ ...prev, [data.socketId]: data }));
-        } catch (e) {
-          console.error('Error handling cursor-moved:', e);
-        }
-      });
-
       socket.on('user-joined', (data) => {
         try {
           setParticipants(prev => {
@@ -136,11 +113,6 @@ const CodeEditor = () => {
       socket.on('user-left', (data) => {
         try {
           setParticipants(prev => prev.filter(p => p.socketId !== data.socketId));
-          setCursors(prev => {
-            const newCursors = { ...prev };
-            delete newCursors[data.socketId];
-            return newCursors;
-          });
         } catch (e) {
           console.error('Error handling user-left:', e);
         }
@@ -174,7 +146,7 @@ const CodeEditor = () => {
       socket.on('connect_error', (err) => {
         try {
           console.error('Connection error:', err);
-          alert('Failed to connect to server: ' + err.message + '. Please ensure the server is running on port 5000.');
+          alert('Failed to connect to server: ' + err.message + '. Please ensure the server is running.');
         } catch (e) {
           console.error('Error in connect_error handler:', e);
         }
@@ -237,6 +209,7 @@ const CodeEditor = () => {
           oldError.apply(console, args);
         };
         try {
+          // eslint-disable-next-line no-new-func
           new Function(code)();
           result = logs.join('\n') || 'Execution completed (no output).';
         } catch (e) {
@@ -246,26 +219,11 @@ const CodeEditor = () => {
           console.error = oldError;
         }
       } else if (language === 'python') {
-        if (!pyodideLoaded || !pyodideInstance) {
-          result = 'Pyodide is loading... Please wait and try again.';
-        } else {
-          try {
-            pyodideInstance.runPython(`
-import sys
-from io import StringIO
-sys.stdout = mystdout = StringIO()
-`);
-            pyodideInstance.runPython(code);
-            const pyResult = pyodideInstance.runPython('mystdout.getvalue()');
-            result = pyResult ? String(pyResult) : 'Execution completed (no output).';
-          } catch (e) {
-            result = 'Error: ' + e.message;
-          }
-        }
+        result = 'Python execution is not available in this deployment.';
       } else if (language === 'text') {
         result = code || 'No text entered.';
       } else {
-        const response = await axios.post('http://localhost:5000/api/execute', { language, code });
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/execute`, { language, code });
         if (response.data.output) {
           result = response.data.output;
         }
@@ -323,17 +281,7 @@ sys.stdout = mystdout = StringIO()
     return () => {
       socketRef.current.off('code-updated', handler);
     };
-  }, [socketRef.current]);
-
-  const handleCursorChange = (e) => {
-    if (socketRef.current && e) {
-      socketRef.current.emit('cursor-update', {
-        roomId,
-        position: e.position,
-        selection: e.selection
-      });
-    }
-  };
+  }, []);
 
   const handleTypingStart = () => {
     if (socketRef.current) {
@@ -402,7 +350,7 @@ sys.stdout = mystdout = StringIO()
         <div className="flex-1 flex flex-col relative">
           <div className="flex-1 relative">
             <Editor
-              key={language} // <-- Add this line!
+              key={language}
               height="70vh"
               language={language === 'text' ? 'plaintext' : language}
               value={codes[language]}
@@ -421,7 +369,7 @@ sys.stdout = mystdout = StringIO()
               onKeyDown={handleTypingStart}
               onKeyUp={handleTypingStop}
               onMouseUp={handleTypingStop}
-/>
+            />
             {typingUsers.length > 0 && (
               <div className={`absolute top-2 right-2 px-2 py-1 rounded text-sm ${theme === 'dark' ? 'bg-yellow-800 text-yellow-200' : 'bg-yellow-200'}`}>
                 {typingUsers.length} user(s) typing...
