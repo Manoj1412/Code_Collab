@@ -102,51 +102,51 @@ const CodeEditor = () => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
-useEffect(() => {
-  const state = location.state;
-  try {
-    if (state && state.username && state.avatarColor) {
-      setUsername(state.username);
-      connectSocket(
-        socketRef,
-        roomId,
-        state.username,
-        state.avatarColor,
-        setCodes,
-        setLanguage,
-        setParticipants,
-        setTypingUsers
-      );
-    } else {
-      const promptUsername = prompt('Enter your username:');
-      if (promptUsername) {
-        setUsername(promptUsername);
-        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
-        const color = colors[Math.floor(Math.random() * colors.length)];
+  useEffect(() => {
+    const state = location.state;
+    try {
+      if (state && state.username && state.avatarColor) {
+        setUsername(state.username);
         connectSocket(
           socketRef,
           roomId,
-          promptUsername,
-          color,
+          state.username,
+          state.avatarColor,
           setCodes,
           setLanguage,
           setParticipants,
           setTypingUsers
         );
+      } else {
+        const promptUsername = prompt('Enter your username:');
+        if (promptUsername) {
+          setUsername(promptUsername);
+          const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          connectSocket(
+            socketRef,
+            roomId,
+            promptUsername,
+            color,
+            setCodes,
+            setLanguage,
+            setParticipants,
+            setTypingUsers
+          );
+        }
       }
+    } catch (err) {
+      console.error('Failed to initialize editor:', err);
+      alert('Failed to connect to the room. Please check if the server is running and try again.');
     }
-  } catch (err) {
-    console.error('Failed to initialize editor:', err);
-    alert('Failed to connect to the room. Please check if the server is running and try again.');
-  }
-  return () => {
     const cleanupSocket = socketRef.current;
-    if (cleanupSocket) {
-      cleanupSocket.emit('leave-room');
-      cleanupSocket.disconnect();
-    }
-  };
-}, [roomId, location]);
+    return () => {
+      if (cleanupSocket) {
+        cleanupSocket.emit('leave-room');
+        cleanupSocket.disconnect();
+      }
+    };
+  }, [roomId, location]);
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -251,15 +251,16 @@ useEffect(() => {
 
   useEffect(() => {
     if (!socketRef.current) return;
+    const socket = socketRef.current;
     const handler = (data) => {
       setCodes(prev => ({
         ...prev,
         [data.language]: data.code
       }));
     };
-    socketRef.current.on('code-updated', handler);
+    socket.on('code-updated', handler);
     return () => {
-      socketRef.current.off('code-updated', handler);
+      socket.off('code-updated', handler);
     };
   }, []);
 
