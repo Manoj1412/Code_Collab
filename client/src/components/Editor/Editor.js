@@ -294,7 +294,7 @@ const CodeEditor = () => {
             className="px-2 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
             title="Copy Room ID"
           >
-            📋
+          🔗
           </button>
         </div>
         <div className="flex items-center space-x-4">
