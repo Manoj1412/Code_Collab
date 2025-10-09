@@ -53,8 +53,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: 'url(/pexels-carlos-oliva-1966452-3586966.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div className="max-w-md w-full bg-gray-800/70 backdrop-blur-sm rounded-lg shadow-md p-8">
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: 'url(https://png.pngtree.com/thumb_back/fh260/background/20201022/pngtree-innovation-abstract-technology-background-template-image_430540.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="max-w-md w-full bg-gray-800/70 rounded-lg shadow-md p-8">
         <h1 className="text-3xl font-bold text-center text-white mb-8 flex items-center justify-center"><span className="mr-2 text-2xl"><img
           src="https://png.pngtree.com/element_our/png_detail/20181013/code-icon-design-vector-png_125856.jpg"class="img-fluid rounded-top" alt="Code Icon" className='w-8 rounded-full'/></span>Code Collab</h1>
 
@@ -64,7 +64,7 @@ const Dashboard = () => {
           <button
             onClick={handleCreateRoom}
             disabled={createLoading}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-md hover:from-purple-600 hover:to-pink-600 disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-gray-700 to-pink-500 text-white py-3 px-4 rounded-md hover:from-gray-600 hover:to-pink-400 disabled:opacity-50"
           >
             {createLoading ? 'Creating...' : 'Create New Room'}
           </button>
