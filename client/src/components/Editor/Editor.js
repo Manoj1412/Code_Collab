@@ -202,7 +202,7 @@ const CodeEditor = () => {
           console.error = oldError;
         }
       } else if (language === 'python') {
-        result = 'Python execution is not available in this deployment.';
+        result = 'Python execution will be available soon.';
       } else if (language === 'text') {
         result = code || 'No text entered.';
       } else {
