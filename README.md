@@ -73,8 +73,6 @@ CLIENT_URL=http://localhost:3000
   - Switch language (dropdown), write code, click "Run":
     - JS: Executes in sandbox, alerts output/errors.
     - Python: First run loads Pyodide (~10s), then `print("Hello")` alerts "Hello".
-    - HTML: Opens preview tab.
-    - CSS: Previews with sample HTML.
   - Chat: Type messages, see broadcasts.
   - Participants: Shows users with colored avatars.
 - **API Test** (curl example for create room):
