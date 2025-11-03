@@ -30,6 +30,14 @@ router.post('/execute', async (req, res) => {
     let execFile;
 
     switch (language) {
+      case 'javascript':
+        command = `node ${tempFile}`;
+        execFile = null;
+        break;
+      case 'python':
+        command = `python ${tempFile}`;
+        execFile = null;
+        break;
       case 'c':
         command = `gcc ${tempFile} -o ${tempFile}.out 2>&1 && ./${tempFile}.out`;
         execFile = tempFile + '.out';
@@ -100,6 +108,8 @@ router.post('/execute', async (req, res) => {
 
 function getExtension(lang) {
   switch (lang) {
+    case 'javascript': return 'js';
+    case 'python': return 'py';
     case 'c': return 'c';
     case 'cpp': return 'cpp';
     case 'java': return 'java';

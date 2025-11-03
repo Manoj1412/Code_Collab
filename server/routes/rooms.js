@@ -5,18 +5,24 @@ const router = express.Router();
 
 // POST /api/rooms/create
 router.post('/create', async (req, res) => {
+  const startTime = Date.now();
   try {
     const { name, language } = req.body;
+    console.log(`Creating room: name=${name}, language=${language}`);
     const roomId = Math.random().toString(36).substring(2, 8); // shortened to 6 chars
+    console.log(`Generated roomId: ${roomId}`);
     const project = await Project.create({
       roomId,
       name: name || 'Untitled Project',
       language: language || 'javascript',
       participants: []
     });
+    const endTime = Date.now();
+    console.log(`Room created successfully in ${endTime - startTime}ms`);
     res.status(201).json({ roomId });
   } catch (error) {
-    console.error(error);
+    const endTime = Date.now();
+    console.error(`Room creation failed after ${endTime - startTime}ms:`, error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import io from 'socket.io-client';
 import axios from 'axios';
+
 import Participants from './Participants';
 import Chat from './Chat';
 
@@ -19,7 +20,12 @@ const DEFAULT_CODES = {
 
 function connectSocket(socketRef, roomId, user, color, setCodes, setLanguage, setParticipants, setTypingUsers) {
   try {
-    const socket = io(process.env.REACT_APP_API_URL);
+    const socket = io(process.env.REACT_APP_API_URL, {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 20000
+    });
     socketRef.current = socket;
 
     socket.emit('join-room', {
@@ -72,6 +78,21 @@ function connectSocket(socketRef, roomId, user, color, setCodes, setLanguage, se
       alert('Failed to connect to server: ' + err.message + '. Please ensure the server is running.');
     });
 
+    socket.on('reconnect', () => {
+      console.log('Reconnected to server');
+      // Re-emit join-room on reconnect
+      socket.emit('join-room', {
+        roomId,
+        username: user,
+        avatarColor: color
+      });
+    });
+
+    socket.on('reconnect_failed', () => {
+      console.error('Failed to reconnect after multiple attempts');
+      alert('Lost connection and failed to reconnect. Please refresh the page.');
+    });
+
     // Cleanup function will be handled in useEffect
     return;
   } catch (err) {
@@ -92,6 +113,7 @@ const CodeEditor = () => {
   const [username, setUsername] = useState('');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+
   const socketRef = useRef();
   const editorRef = useRef();
   const saveTimeoutRef = useRef();
@@ -202,7 +224,12 @@ const CodeEditor = () => {
           console.error = oldError;
         }
       } else if (language === 'python') {
-        result = 'Python execution will be available soon.';
+        // Python now executes on server
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/execute`, {
+          language: 'python',
+          code: codes.python
+        });
+        result = response.data.output || response.data.error;
       } else if (language === 'text') {
         result = code || 'No text entered.';
       } else {
