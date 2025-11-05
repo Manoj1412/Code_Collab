@@ -24,16 +24,7 @@ const projectSchema = new mongoose.Schema({
     avatarColor: String,
     socketId: String
   }],
-  snapshots: [{
-    codes: {
-      type: Map,
-      of: String
-    },
-    timestamp: {
-      type: Date,
-      default: Date.now
-    }
-  }]
+
 }, {
   timestamps: true
 });

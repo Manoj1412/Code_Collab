@@ -19,7 +19,6 @@ const handleSocket = (io) => {
   };
 
   io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
 
     // Join room
     socket.on('join-room', async (data) => {
@@ -161,26 +160,7 @@ const handleSocket = (io) => {
       }
     });
 
-    // Auto-save snapshot
-    socket.on('save-snapshot', async (data) => {
-      const { roomId, code } = data;
-      if (socket.roomId === roomId) {
-        try {
-          const project = await Project.findOne({ roomId });
-          if (project) {
-            project.snapshots.push({ code, timestamp: new Date() });
-            // Keep only last 10 snapshots for MVP
-            if (project.snapshots.length > 10) {
-              project.snapshots = project.snapshots.slice(-10);
-            }
-            project.code = code; // Update current code
-            await project.save();
-          }
-        } catch (error) {
-          console.error('Save error:', error);
-        }
-      }
-    });
+
 
     // Output update
     socket.on('output-update', (data) => {

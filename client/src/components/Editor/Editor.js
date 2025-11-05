@@ -116,7 +116,7 @@ const CodeEditor = () => {
 
   const socketRef = useRef();
   const editorRef = useRef();
-  const saveTimeoutRef = useRef();
+
 
   const code = codes[language];
 
@@ -269,10 +269,7 @@ const CodeEditor = () => {
         code: value,
         timestamp: Date.now()
       });
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = setTimeout(() => {
-        socketRef.current.emit('save-snapshot', { roomId, code: value });
-      }, 30000);
+
     }
   };
 

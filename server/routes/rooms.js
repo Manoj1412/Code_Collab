@@ -8,9 +8,7 @@ router.post('/create', async (req, res) => {
   const startTime = Date.now();
   try {
     const { name, language } = req.body;
-    console.log(`Creating room: name=${name}, language=${language}`);
     const roomId = Math.random().toString(36).substring(2, 8); // shortened to 6 chars
-    console.log(`Generated roomId: ${roomId}`);
     const project = await Project.create({
       roomId,
       name: name || 'Untitled Project',
